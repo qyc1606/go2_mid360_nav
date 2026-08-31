@@ -1,0 +1,10 @@
+<launch>
+  <!-- V8 compatibility only. Do not use this node as a TF publisher. -->
+  <node pkg="go2_planar_adapter"
+        type="go2_planar_adapter_node"
+        name="go2_planar_adapter"
+        output="screen">
+    <param name="input_topic" value="/odom_nav"/>
+    <param name="output_topic" value="/odom_nav_legacy"/>
+  </node>
+</launch>

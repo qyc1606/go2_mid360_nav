@@ -1,0 +1,14 @@
+<launch>
+
+  <rosparam
+      command="load"
+      file="$(find go2_localization_guard)/config/guard.yaml"
+      ns="go2_localization_guard"/>
+
+  <node
+      pkg="go2_localization_guard"
+      type="go2_localization_guard_node"
+      name="go2_localization_guard"
+      output="screen"/>
+
+</launch>

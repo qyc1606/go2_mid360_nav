@@ -1,0 +1,29 @@
+<launch>
+
+
+
+  <arg name="config"
+
+       default="$(find go2_map_tools)/config/corridor_nav.yaml"/>
+
+
+
+  <rosparam command="load"
+
+            file="$(arg config)"
+
+            ns="pcd_to_pgm"/>
+
+
+
+  <node pkg="go2_map_tools"
+
+        type="pcd_to_pgm_node"
+
+        name="pcd_to_pgm"
+
+        output="screen"/>
+
+
+
+</launch>

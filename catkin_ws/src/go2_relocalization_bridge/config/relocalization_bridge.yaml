@@ -1,0 +1,10 @@
+global_pose_topic: /relocalization/global_pose
+odom_topic: /odom_nav
+
+map_frame: map
+odom_frame: odom
+base_frame: base_link
+
+publish_tf: true
+
+max_odom_age_sec: 0.50

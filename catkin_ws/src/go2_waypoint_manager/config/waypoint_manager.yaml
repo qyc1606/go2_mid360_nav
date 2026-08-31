@@ -1,0 +1,7 @@
+input_path_topic: /sparse_waypoints
+goal_topic: /ego/goal
+
+odom_frame: odom
+base_frame: base_link
+
+reach_distance_m: 0.50

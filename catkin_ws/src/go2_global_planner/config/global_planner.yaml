@@ -1,0 +1,21 @@
+map_topic: /map_2d
+goal_topic: /move_base_simple/goal
+
+map_frame: map
+base_frame: base_link
+
+occupied_threshold: 50
+
+sparse_spacing_m: 1.50
+
+# If the exact base_link grid cell is UNKNOWN because of
+# PCD-to-OccupancyGrid rasterization, project the A* start
+# to the nearest known FREE cell.
+#
+# Current measured nearest FREE distance is about 0.714 m,
+# therefore use 1.0 m.
+start_search_radius_m: 1.00
+
+# A user goal should normally be clicked in known free space.
+# This smaller radius only provides tolerance for grid/raster errors.
+goal_search_radius_m: 0.50

@@ -1,0 +1,11 @@
+input_topic: /cloud_registered_odom
+output_topic: /ego/cloud
+
+voxel_leaf: 0.08
+
+min_z: 0.08
+max_z: 0.70
+
+extrude_z_min: 0.00
+extrude_z_max: 1.00
+extrude_step: 0.10

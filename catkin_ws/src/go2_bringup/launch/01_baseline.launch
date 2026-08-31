@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- 传感器驱动仍按你当前已验证的独立 launch 启动。 -->
+
+  <include file="$(find go2_tf_manager)/launch/tf_manager.launch"/>
+
+  <node pkg="go2_time_sync_checker"
+        type="time_sync_checker.py"
+        name="go2_time_sync_checker"
+        output="screen"/>
+
+</launch>

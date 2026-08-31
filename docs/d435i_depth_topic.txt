@@ -1,0 +1,8 @@
+Type: sensor_msgs/Image
+
+Publishers: 
+ * /camera/realsense2_camera_manager (http://tegra-ubuntu:42445/)
+
+Subscribers: None
+
+

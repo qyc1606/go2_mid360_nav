@@ -1,0 +1,54 @@
+# ROS/catkin build products
+**/build/
+**/devel/
+**/install/
+**/.catkin_tools/
+**/logs/
+**/Log/
+**/__pycache__/
+*.pyc
+
+# Runtime data and experiments
+bags/
+datasets/
+logs/
+*.bag
+*.bag.active
+
+# Generated map archives and large vendor artifacts
+maps/**/archive/
+vendor/*.zip
+third_party/*.zip
+**/*.zip
+vendor/FAST_LIO/PCD/
+**/PCD/
+
+# Keep only the selected formal map artifacts under version control
+maps/**/*.pcd
+maps/**/*.pgm
+maps/**/*.yaml
+!maps/corridor_01/public_map.pcd
+!maps/corridor_01/map.pgm
+!maps/corridor_01/map.yaml
+!maps/corridor_01/map_raw.pgm
+!maps/corridor_01/map_raw.yaml
+!maps/corridor_01/frozen_config/
+!maps/corridor_01/frozen_config/*.yaml
+
+# Editor and temporary files
+.vscode/
+*.swp
+*.swo
+*~
+*.bak*
+*.save
+*.save.*
+*.orig
+
+# Local backup artifacts
+backups/
+
+# Accidental empty shell/command artifacts
+catkin_ws/grep
+catkin_ws/linear.x,
+catkin_ws/linear.y,

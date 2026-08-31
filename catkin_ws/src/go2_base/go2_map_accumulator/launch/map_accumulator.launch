@@ -1,0 +1,26 @@
+<launch>
+  <arg name="output_pcd"
+       default="$(env HOME)/go2_mid360_nav/maps/current/public_map.pcd"/>
+
+  <node pkg="go2_map_accumulator"
+        type="go2_map_accumulator_node"
+        name="go2_map_accumulator"
+        output="screen">
+
+    <param name="input_topic"
+           value="/cloud_registered_odom"/>
+
+    <param name="output_pcd"
+           value="$(arg output_pcd)"/>
+
+    <param name="voxel_leaf"
+           value="0.05"/>
+
+    <param name="filter_every_n_frames"
+           value="10"/>
+
+    <param name="save_on_shutdown"
+           value="true"/>
+
+  </node>
+</launch>

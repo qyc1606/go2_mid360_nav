@@ -1,0 +1,21 @@
+version: 1.0
+
+mid360:
+  lidar_topic: /livox/lidar
+  imu_topic: /livox/imu
+
+  fast_lio_software_time_sync:
+    enabled: false
+
+  observed:
+    lidar_monotonic: TODO
+    imu_monotonic: TODO
+    large_offset_detected: TODO
+
+d435i:
+  color_topic: /camera/color/image_raw
+  depth_topic: /camera/depth/image_rect_raw
+
+  role_in_estimator: false
+
+notes: ""

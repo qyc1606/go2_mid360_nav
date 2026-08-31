@@ -1,0 +1,8 @@
+Type: sensor_msgs/Imu
+
+Publishers: 
+ * /livox_lidar_publisher2 (http://tegra-ubuntu:36891/)
+
+Subscribers: None
+
+

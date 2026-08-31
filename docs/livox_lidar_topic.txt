@@ -1,0 +1,9 @@
+Type: livox_ros_driver2/CustomMsg
+
+Publishers: 
+ * /livox_lidar_publisher2 (http://tegra-ubuntu:36891/)
+
+Subscribers: 
+ * /rostopic_108802_1786783384987 (http://tegra-ubuntu:43235/)
+
+

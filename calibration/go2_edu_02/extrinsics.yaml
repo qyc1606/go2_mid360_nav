@@ -1,0 +1,66 @@
+version: 2.0
+robot_id: go2_edu_02
+
+frames:
+  map: map
+  odom: odom
+  robot_init: robot_init
+  base_footprint: base_footprint
+  base_link: base_link
+  lidar_link: lidar_link
+  camera_link: camera_link
+
+lio_frames:
+  world: lio_odom
+  body: body_lio
+
+mid360_mount:
+  base_link_to_lidar_link:
+    x: 0.187
+    y: 0.0
+    z: 0.16
+
+    # Refined from horizontal ground-plane fitting.
+    roll_deg: -0.1
+    pitch_deg: 39
+
+    # To be refined by straight-line/yaw alignment test.
+    yaw_deg: 0.0
+
+  # Mechanical nominal value; keep this unchanged.
+  nominal_mount_pitch_deg: 30.0
+
+  calibration_status: provisional
+
+  calibration_method:
+    - mechanical_measurement
+    - ground_plane_refinement
+    - straight_line_yaw_check
+
+d435i_mount:
+  base_link_to_camera_link:
+    x: 0.35
+    y: 0.0
+    z: 0.1
+
+    roll_deg: 0.0
+    pitch_deg: 0.0
+    yaw_deg: 0.0
+
+  use_for_localization: false
+  use_for_ego: false
+
+  roles:
+    - rgb_record
+    - depth_record
+    - future_visual_extension
+
+startup_normalization:
+  sample_count: 30
+  require_stationary_at_startup: true
+  publish_lio_alignment_tf: true
+
+notes:
+  calibration_owner: ''
+  calibration_date: ''
+  comment: 'MID-360 roll/pitch ground-plane refinement in progress.'

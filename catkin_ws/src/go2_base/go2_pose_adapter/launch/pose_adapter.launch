@@ -1,0 +1,19 @@
+<launch>
+  <arg name="extrinsics"
+       default="$(env HOME)/go2_mid360_nav/calibration/go2_edu_02/extrinsics.yaml"/>
+
+  <rosparam command="load" file="$(arg extrinsics)"/>
+
+  <node pkg="go2_pose_adapter"
+        type="go2_pose_adapter_node"
+        name="go2_pose_adapter"
+        output="screen">
+
+    <param name="input_odom_topic" value="/lio/odometry"/>
+    <param name="output_robot_odom_topic" value="/odom_robot"/>
+    <param name="output_nav_odom_topic" value="/odom_nav"/>
+
+    <param name="initialization_samples" value="30"/>
+    <param name="velocity_alpha" value="0.45"/>
+  </node>
+</launch>

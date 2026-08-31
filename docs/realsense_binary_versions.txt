@@ -1,0 +1,3 @@
+ii  ros-noetic-librealsense2                    2.50.0-1focal.20250426.013030        arm64        Library for capturing data from the Intel(R) RealSense(TM) SR300, D400, L500 Depth cameras and T2xx Tracking devices.
+ii  ros-noetic-realsense2-camera                2.3.2-1focal.20250521.025003         arm64        RealSense Camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras
+ii  ros-noetic-realsense2-description           2.3.2-1focal.20250520.001436         arm64        RealSense Camera description package for Intel 3D D400 cameras

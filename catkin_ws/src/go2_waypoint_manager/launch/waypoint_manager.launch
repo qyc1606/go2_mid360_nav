@@ -1,0 +1,14 @@
+<launch>
+
+  <rosparam
+      command="load"
+      file="$(find go2_waypoint_manager)/config/waypoint_manager.yaml"
+      ns="go2_waypoint_manager"/>
+
+  <node
+      pkg="go2_waypoint_manager"
+      type="go2_waypoint_manager_node"
+      name="go2_waypoint_manager"
+      output="screen"/>
+
+</launch>

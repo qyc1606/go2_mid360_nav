@@ -1,0 +1,10 @@
+<launch>
+  <arg name="with_camera" default="false"/>
+
+  <include file="$(find go2_bringup)/launch/11_fastlio_local_odom.launch"/>
+  <include file="$(find go2_bringup)/launch/20_robot_frames.launch"/>
+
+  <group if="$(arg with_camera)">
+    <include file="$(find go2_bringup)/launch/d435i.launch"/>
+  </group>
+</launch>

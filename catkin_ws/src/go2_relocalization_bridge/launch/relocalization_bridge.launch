@@ -1,0 +1,15 @@
+<launch>
+
+  <node pkg="go2_relocalization_bridge"
+        type="go2_relocalization_bridge_node"
+        name="go2_relocalization_bridge"
+        output="screen"
+        respawn="false">
+
+    <rosparam
+        command="load"
+        file="$(find go2_relocalization_bridge)/config/relocalization_bridge.yaml"/>
+
+  </node>
+
+</launch>

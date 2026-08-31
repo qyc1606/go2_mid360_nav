@@ -1,0 +1,14 @@
+<launch>
+
+  <rosparam
+      command="load"
+      file="$(find go2_ego_cloud_adapter)/config/ego_cloud.yaml"
+      ns="go2_ego_cloud_adapter"/>
+
+  <node
+      pkg="go2_ego_cloud_adapter"
+      type="go2_ego_cloud_adapter_node"
+      name="go2_ego_cloud_adapter"
+      output="screen"/>
+
+</launch>

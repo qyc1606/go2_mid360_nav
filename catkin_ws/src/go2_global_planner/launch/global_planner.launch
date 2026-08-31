@@ -1,0 +1,14 @@
+<launch>
+
+  <rosparam
+      command="load"
+      file="$(find go2_global_planner)/config/global_planner.yaml"
+      ns="go2_global_planner"/>
+
+  <node
+      pkg="go2_global_planner"
+      type="go2_global_planner_node"
+      name="go2_global_planner"
+      output="screen"/>
+
+</launch>

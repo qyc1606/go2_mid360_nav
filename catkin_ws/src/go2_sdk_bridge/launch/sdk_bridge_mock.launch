@@ -1,0 +1,9 @@
+<launch>
+
+  <node
+      pkg="go2_sdk_bridge"
+      type="go2_sdk_bridge_mock_node"
+      name="go2_sdk_bridge_mock"
+      output="screen"/>
+
+</launch>

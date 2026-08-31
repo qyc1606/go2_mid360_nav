@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+
+  <name>go2_map_tools</name>
+
+  <version>0.1.0</version>
+
+  <description>
+    PCD to 2D occupancy map tools for Unitree GO2 navigation.
+  </description>
+
+  <maintainer email="nvidia@example.com">
+    nvidia
+  </maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>pcl_ros</depend>
+  <depend>pcl_conversions</depend>
+
+  <export/>
+
+</package>

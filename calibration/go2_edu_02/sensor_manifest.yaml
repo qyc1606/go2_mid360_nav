@@ -1,0 +1,35 @@
+version: 1.0
+
+robot:
+  model: GO2-EDU
+  id: go2_edu_02
+
+compute:
+  model: Jetson_AGX_Orin
+  os: Ubuntu_20.04
+  ros: noetic
+
+lidar:
+  model: Livox_MID360
+  serial: TODO_FILL
+  cloud_topic: /livox/lidar
+  imu_topic: /livox/imu
+  mount_position: top_rack
+  nominal_mount_pitch_deg: 30.0
+  use_internal_imu_for_fast_lio: true
+
+camera:
+  model: Intel_RealSense_D435i
+  serial: TODO_FILL
+  color_topic: /camera/color/image_raw
+  color_info_topic: /camera/color/camera_info
+  depth_topic: /camera/depth/image_rect_raw
+  depth_info_topic: /camera/depth/camera_info
+  mount_position: front
+  nominal_orientation: horizontal_forward
+  use_for_fast_lio: false
+  use_for_ego: false
+  roles:
+    - rgb_record
+    - depth_record
+    - future_visual_extension

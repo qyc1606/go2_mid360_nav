@@ -1,0 +1,31 @@
+input_pcd: /home/nvidia/go2_mid360_nav/maps/current/public_map.pcd
+
+output_pgm: /home/nvidia/go2_mid360_nav/maps/current/map.pgm
+output_yaml: /home/nvidia/go2_mid360_nav/maps/current/map.yaml
+
+resolution: 0.05
+padding_m: 0.50
+
+# Real floor plane of public_map.pcd is around z = -0.35 m.
+# Use a narrow band around the measured floor distribution.
+floor_min_z: -0.55
+floor_max_z: -0.05
+
+# Collision-relevant obstacle band.
+# Keep it clearly above the floor band.
+obstacle_min_z: 0.05
+obstacle_max_z: 0.70
+
+# Floor points are already dense once the correct z band is used.
+# Only small gap filling is needed.
+free_dilation_m: 0.20
+
+# Preliminary conservative obstacle inflation.
+obstacle_inflation_m: 0.30
+
+min_floor_points: 1
+min_obstacle_points: 1
+
+unknown_value: 205
+free_value: 254
+occupied_value: 0
