@@ -32,6 +32,7 @@ go2_mid360_nav/
     ├── FAST_LIO/
     ├── Livox-SDK2/
     ├── livox_ros_driver2/
+    ├── Unitree_SDK2/
     ├── fast_lio_localization/    # NDT map loader and global localization
     ├── go2_sdk_bridge/
     ├── go2_system_bringup/
@@ -52,7 +53,7 @@ go2_mid360_nav/
 ### Hardware and drivers
 
 - `livox_ros_driver2` and `Livox-SDK2` provide Mid-360 point cloud and IMU input.
-- `go2_sdk_bridge` is the only package allowed to call Unitree SDK2 motion APIs.
+- `Unitree_SDK2` is a clean source copy without nested Git metadata; `go2_sdk_bridge` is the only package allowed to call its motion APIs.
 - GO2 network interface names, SDK paths, and hardware identifiers are configuration values rather than hard-coded source paths.
 
 ### Localization and frame adaptation
