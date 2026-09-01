@@ -83,7 +83,7 @@ Run:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y ros-noetic-navigation ros-noetic-teb-local-planner
+sudo apt-get install -y python3-pytest ros-noetic-navigation ros-noetic-teb-local-planner
 source /opt/ros/noetic/setup.bash
 rospack find move_base
 rospack find global_planner
@@ -119,7 +119,7 @@ Add these exact root rules:
 Create `docs/dependencies.md` with the output of:
 
 ```bash
-dpkg-query -W -f='${Package} ${Version}\n' ros-noetic-navigation ros-noetic-teb-local-planner
+dpkg-query -W -f='${Package} ${Version}\n' python3-pytest ros-noetic-navigation ros-noetic-teb-local-planner
 git -C /media/nvidia/系统/reference_projects/AADCL_UAV_UGV rev-parse HEAD
 git -C /home/nvidia/go2_mid360_nav/vendor/FAST_LIO rev-parse HEAD 2>/dev/null || true
 ```
