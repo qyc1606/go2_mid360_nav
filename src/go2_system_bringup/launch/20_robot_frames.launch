@@ -1,6 +1,6 @@
 <launch>
   <arg name="extrinsics"
-       default="$(env HOME)/go2_mid360_nav/calibration/go2_edu_02/extrinsics.yaml"/>
+       default="$(find go2_system_bringup)/config/extrinsics.yaml"/>
 
   <include file="$(find go2_tf_manager)/launch/tf_manager.launch">
     <arg name="extrinsics" value="$(arg extrinsics)"/>
@@ -10,6 +10,6 @@
     <arg name="extrinsics" value="$(arg extrinsics)"/>
   </include>
 
-  <include file="$(find cloud_frame_adapter)/launch/cloud_to_base.launch"/>
-  <include file="$(find cloud_frame_adapter)/launch/cloud_world_to_odom.launch"/>
+  <include file="$(find go2_cloud_adapter)/launch/cloud_to_base.launch"/>
+  <include file="$(find go2_cloud_adapter)/launch/cloud_world_to_odom.launch"/>
 </launch>

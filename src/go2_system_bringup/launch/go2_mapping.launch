@@ -1,0 +1,21 @@
+<launch>
+  <arg name="map_name" default="current_mapping"/>
+  <arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps"/>
+  <arg name="map_dir" default="$(arg map_root)/$(arg map_name)"/>
+  <arg name="start_lidar" default="true"/>
+
+  <group if="$(arg start_lidar)">
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+  </group>
+  <include file="$(find go2_system_bringup)/launch/10_fastlio_mapping.launch"/>
+  <param name="pcd_save/pcd_save_en" value="false"/>
+  <include file="$(find go2_system_bringup)/launch/20_robot_frames.launch"/>
+  <include file="$(find go2_pointcloud_mapper)/launch/pointcloud_mapper.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+    <arg name="map_dir" value="$(arg map_dir)"/>
+    <arg name="input_cloud" value="/cloud_registered_base"/>
+    <arg name="input_odom" value="/odom_nav"/>
+    <arg name="output_path" value="$(arg map_dir)/public_map.pcd"/>
+  </include>
+</launch>

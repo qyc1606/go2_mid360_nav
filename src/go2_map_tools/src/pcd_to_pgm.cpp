@@ -24,6 +24,8 @@
 
 #include <string>
 
+#include <stdexcept>
+
 #include <vector>
 
 
@@ -46,9 +48,7 @@ public:
 
         input_pcd_,
 
-        std::string("/home/nvidia/go2_mid360_nav/maps/corridor_01/public_map.pcd"));
-
-
+        std::string());
 
     pnh_.param<std::string>(
 
@@ -56,7 +56,7 @@ public:
 
         output_pgm_,
 
-        std::string("/home/nvidia/go2_mid360_nav/maps/corridor_01/map.pgm"));
+        std::string());
 
 
 
@@ -66,7 +66,13 @@ public:
 
         output_yaml_,
 
-        std::string("/home/nvidia/go2_mid360_nav/maps/corridor_01/map.yaml"));
+        std::string());
+
+    if (input_pcd_.empty() || output_pgm_.empty() || output_yaml_.empty())
+    {
+      throw std::runtime_error(
+          "input_pcd, output_pgm, and output_yaml parameters are required");
+    }
 
 
 

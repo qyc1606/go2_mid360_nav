@@ -1,9 +1,11 @@
 <launch>
   <arg name="map_name" default="current_mapping" />
-  <arg name="input_cloud" default="/cloud_registered" />
-  <arg name="input_odom" default="/Odometry" />
+  <arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps" />
+  <arg name="map_dir" default="$(arg map_root)/$(arg map_name)" />
+  <arg name="input_cloud" default="/cloud_registered_base" />
+  <arg name="input_odom" default="/odom_nav" />
   <arg name="output_path"
-       default="$(env HOME)/livox_fastlio/maps/$(arg map_name)/filtered_camera_init.pcd" />
+       default="$(arg map_dir)/public_map.pcd" />
 
   <node pkg="go2_pointcloud_mapper"
         type="pointcloud_mapper_node"
