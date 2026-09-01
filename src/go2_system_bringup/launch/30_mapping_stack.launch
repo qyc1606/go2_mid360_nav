@@ -1,0 +1,19 @@
+<launch>
+  <arg name="with_camera" default="false"/>
+  <arg name="with_map_accumulator" default="true"/>
+  <arg name="map_output"
+       default="$(env HOME)/go2_mid360_nav/maps/current/public_map.pcd"/>
+
+  <include file="$(find go2_system_bringup)/launch/10_fastlio_mapping.launch"/>
+  <include file="$(find go2_system_bringup)/launch/20_robot_frames.launch"/>
+
+  <group if="$(arg with_camera)">
+    <include file="$(find go2_system_bringup)/launch/d435i.launch"/>
+  </group>
+
+  <group if="$(arg with_map_accumulator)">
+    <include file="$(find go2_map_accumulator)/launch/map_accumulator.launch">
+      <arg name="output_pcd" value="$(arg map_output)"/>
+    </include>
+  </group>
+</launch>

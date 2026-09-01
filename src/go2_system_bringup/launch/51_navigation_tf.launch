@@ -1,0 +1,42 @@
+<launch>
+  <!-- =============================================================
+       51_navigation_tf.launch
+       GO2 + MID-360 localization Phase B
+
+       Start ONLY after:
+         - FAST-LIO is healthy,
+         - RViz 2D Pose Estimate has been given,
+         - frozen /map and live /cloud_registered overlap,
+         - /localization is stable,
+         - odom -> base_link already exists from Phase A.
+
+       This phase creates the public global chain:
+         map -> odom -> base_link
+       ============================================================= -->
+
+  <!-- Convert FAST-LIO map->body localization into map->base_link
+       PoseStamped, including calibrated body/lidar -> base correction
+       and duplicate timestamp suppression. -->
+  <node pkg="go2_relocalization_bridge"
+        type="localization_to_global_pose.py"
+        name="localization_to_global_pose"
+        output="screen"
+        respawn="false">
+
+    <param name="input_topic" value="/localization"/>
+    <param name="output_topic" value="/relocalization/global_pose"/>
+
+    <param name="map_frame" value="map"/>
+    <param name="base_frame" value="base_link"/>
+    <param name="body_frame" value="body"/>
+    <param name="lidar_frame" value="lidar_link"/>
+
+    <param name="drop_duplicate_stamp" value="true"/>
+
+  </node>
+
+
+  <!-- Unique owner of public map -> odom TF -->
+  <include file="$(find go2_relocalization_bridge)/launch/relocalization_bridge.launch"/>
+
+</launch>

@@ -1,0 +1,14 @@
+<launch>
+
+  <rosparam
+      command="load"
+      file="$(find go2_cmd_watchdog)/config/watchdog.yaml"
+      ns="go2_cmd_watchdog"/>
+
+  <node
+      pkg="go2_cmd_watchdog"
+      type="go2_cmd_watchdog_node"
+      name="go2_cmd_watchdog"
+      output="screen"/>
+
+</launch>

@@ -1,0 +1,11 @@
+<launch>
+  <arg name="extrinsics"
+       default="$(env HOME)/go2_mid360_nav/calibration/go2_edu_02/extrinsics.yaml"/>
+
+  <rosparam command="load" file="$(arg extrinsics)"/>
+
+  <node pkg="go2_tf_manager"
+        type="tf_manager.py"
+        name="go2_tf_manager"
+        output="screen"/>
+</launch>

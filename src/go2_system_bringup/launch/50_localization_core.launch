@@ -1,0 +1,89 @@
+<launch>
+  <!-- =============================================================
+       50_localization_core.launch
+       GO2 + MID-360 localization Phase A
+
+       IMPORTANT:
+       - DOES NOT use 01_baseline.launch.
+       - DOES NOT use topic_tools relay.
+       - FAST-LIO /Odometry is fed directly into go2_pose_adapter.
+       - This phase does NOT create map -> odom.
+       - Keep the robot stationary during go2_pose_adapter initialization.
+       ============================================================= -->
+
+  <arg name="map"
+       default="$(env HOME)/go2_mid360_nav/maps/corridor_01/public_map.pcd"/>
+
+  <arg name="rviz"
+       default="true"/>
+
+  <arg name="extrinsics"
+       default="$(env HOME)/go2_mid360_nav/calibration/go2_edu_02/extrinsics.yaml"/>
+
+
+  <!-- 1. MID-360: known-good direct launch -->
+  <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+
+
+  <!-- 2. Calibrated GO2 static sensor TF -->
+  <include file="$(find go2_tf_manager)/launch/tf_manager.launch">
+    <arg name="extrinsics" value="$(arg extrinsics)"/>
+  </include>
+
+
+  <!-- 3. FAST-LIO global localization stack
+       Existing launch owns:
+         /laserMapping
+         /global_localization
+         /transform_fusion
+         /map publisher
+         optional RViz
+       Main outputs:
+         /Odometry
+         /cloud_registered
+         /map
+         /localization
+         /map_to_odom
+  -->
+  <include file="$(find fast_lio_localization)/launch/localization_go2_mid360.launch">
+    <arg name="map" value="$(arg map)"/>
+    <arg name="rviz" value="$(arg rviz)"/>
+  </include>
+
+
+  <!-- 4. GO2 public local odometry
+       DO NOT use /Odometry -> /lio/odometry relay here.
+
+       go2_pose_adapter consumes FAST-LIO /Odometry directly.
+       The adapter internally:
+         - applies calibrated MID-360 mount correction,
+         - averages the first initialization_samples poses,
+         - defines public odom at the startup base_link pose,
+         - publishes /odom_robot and /odom_nav,
+         - publishes odom -> base_footprint -> base_link.
+
+       /lio_frames/world and /lio_frames/body intentionally remain the
+       calibrated engineering names lio_odom/body_lio.  The current adapter
+       only warns if the incoming message header uses camera_init/body; it
+       computes the pose from msg->pose.pose and does not reject the sample.
+       Keeping lio_odom avoids creating an odom->camera_init TF branch that
+       would conflict with the global localization map->camera_init branch.
+  -->
+  <rosparam command="load" file="$(arg extrinsics)"/>
+
+  <node pkg="go2_pose_adapter"
+        type="go2_pose_adapter_node"
+        name="go2_pose_adapter"
+        output="screen"
+        respawn="false">
+
+    <param name="input_odom_topic" value="/Odometry"/>
+    <param name="output_robot_odom_topic" value="/odom_robot"/>
+    <param name="output_nav_odom_topic" value="/odom_nav"/>
+
+    <param name="initialization_samples" value="30"/>
+    <param name="velocity_alpha" value="0.45"/>
+
+  </node>
+
+</launch>

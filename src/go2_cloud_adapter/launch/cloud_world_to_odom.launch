@@ -1,0 +1,10 @@
+<launch>
+  <node pkg="go2_cloud_adapter"
+        type="go2_cloud_adapter_node"
+        name="cloud_world_to_odom"
+        output="screen">
+    <param name="input_topic" value="/lio/cloud_registered"/>
+    <param name="output_topic" value="/cloud_registered_odom"/>
+    <param name="target_frame" value="odom"/>
+  </node>
+</launch>
