@@ -8,6 +8,8 @@
 **/devel/
 **/install/
 **/.catkin_tools/
+**/Log/
+**/PCD/
 
 # Runtime data and generated assets
 /maps/
