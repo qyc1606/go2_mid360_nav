@@ -25,7 +25,7 @@ public:
     pnh_.param<std::string>(
         "global_pose_topic",
         global_pose_topic_,
-        "/relocalization/global_pose");
+        "/localization");
 
     pnh_.param<double>(
         "timeout_sec",

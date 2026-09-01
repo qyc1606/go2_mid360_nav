@@ -1,4 +1,4 @@
-global_pose_topic: /relocalization/global_pose
+global_pose_topic: /localization
 
 timeout_sec: 2.0
 

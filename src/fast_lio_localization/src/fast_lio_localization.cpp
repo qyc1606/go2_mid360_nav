@@ -11,7 +11,10 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Int32.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -34,17 +37,23 @@ typedef pcl::PointCloud<pcl::PointXYZI> Cloud;
 class Config
 {
 public:
+    string mapFrame = "map";
     // 当前 Scout 系统要求 fast_lio_localization 发布：
     //
     // map -> odom
     //
     // 不再使用原始项目默认的 map -> camera_init。
     string odomFrame = "odom";
+    string baseFrame = "base_link";
+    string cloudTopic = "/cloud_registered_base";
+    string odomTopic = "/odom_nav";
+    string localizationTopic = "/localization";
+    string healthTopic = "/localization/ok";
 
     // map -> odom TF 向未来预发布的时间。
     // 用于避免 TEB / move_base 控制周期与 localization TF
     // 发布周期之间几十毫秒的相位差导致 future extrapolation。
-    double tfPostdateSec = 0.25;
+    double tfPostdateSec = 0.50;
 
     struct
     {
@@ -65,10 +74,16 @@ public:
     {
         // 必须读取 odom_frame。
         // 如果 launch 中没有设置，则默认使用 "odom"。
+        _nh.param<string>("map_frame", mapFrame, string("map"));
         _nh.param<string>("odom_frame", odomFrame, string("odom"));
+        _nh.param<string>("base_frame", baseFrame, string("base_link"));
+        _nh.param<string>("cloud_topic", cloudTopic, string("/cloud_registered_base"));
+        _nh.param<string>("odom_topic", odomTopic, string("/odom_nav"));
+        _nh.param<string>("localization_topic", localizationTopic, string("/localization"));
+        _nh.param<string>("health_topic", healthTopic, string("/localization/ok"));
 
         // map -> odom TF 向未来预发布时间。
-        _nh.param("tf_postdate_sec", tfPostdateSec, 0.25);
+        _nh.param("tf_postdate_sec", tfPostdateSec, 0.50);
 
         _nh.getParam("ndt/debug", ndt.debug);
         _nh.getParam("ndt/num_threads", ndt.numThreads);
@@ -84,6 +99,8 @@ public:
 
         ROS_INFO("fast_lio_localization config:");
         ROS_INFO("  odom_frame      = %s", odomFrame.c_str());
+        ROS_INFO("  cloud_topic     = %s", cloudTopic.c_str());
+        ROS_INFO("  odom_topic      = %s", odomTopic.c_str());
         ROS_INFO("  tf_postdate_sec = %.3f", tfPostdateSec);
     }
 
@@ -101,6 +118,17 @@ public:
             _mapPtr(new Cloud),
             _mapFilteredPtr(new Cloud)
     {
+        _localizationPub = _nh.advertise<geometry_msgs::PoseStamped>(
+                _cfg.localizationTopic, 10, true);
+        _scorePub = _nh.advertise<std_msgs::Float64>(
+                "/localization/ndt_score", 10, true);
+        _iterationsPub = _nh.advertise<std_msgs::Int32>(
+                "/localization/ndt_iterations", 10, true);
+        _translationJumpPub = _nh.advertise<std_msgs::Float64>(
+                "/localization/translation_jump", 10, true);
+        _rotationJumpPub = _nh.advertise<std_msgs::Float64>(
+                "/localization/rotation_jump", 10, true);
+
         _mapSub = _nh.subscribe(
                 "/map_cloud",
                 10,
@@ -118,14 +146,14 @@ public:
         _pcSubPtr =
                 new message_filters::Subscriber<sensor_msgs::PointCloud2>(
                         nh,
-                        "/velodyne_points",
+                        _cfg.cloudTopic,
                         1
                 );
 
         _odomSubPtr =
                 new message_filters::Subscriber<nav_msgs::Odometry>(
                         nh,
-                        "/odom_lio",
+                        _cfg.odomTopic,
                         1
                 );
 
@@ -165,6 +193,11 @@ private:
 
     ros::Subscriber _mapSub;
     ros::Subscriber _initPoseSub;
+    ros::Publisher _localizationPub;
+    ros::Publisher _scorePub;
+    ros::Publisher _iterationsPub;
+    ros::Publisher _translationJumpPub;
+    ros::Publisher _rotationJumpPub;
 
     tf2_ros::TransformBroadcaster _br;
 
@@ -426,9 +459,31 @@ private:
         // map -> odom
         //
         // 发布。
+        const tf::Transform previousOdomMap = _odomMap;
         _odomMap =
                 baseMapNDT *
                 _baseOdom.inverse();
+
+        geometry_msgs::PoseStamped localization;
+        localization.header.stamp = ros::Time::now();
+        localization.header.frame_id = _cfg.mapFrame;
+        tf::poseTFToMsg(baseMapNDT, localization.pose);
+        _localizationPub.publish(localization);
+
+        std_msgs::Float64 score;
+        score.data = _ndt.getFitnessScore();
+        _scorePub.publish(score);
+        std_msgs::Int32 iterations;
+        iterations.data = _ndt.getFinalNumIteration();
+        _iterationsPub.publish(iterations);
+
+        const tf::Transform correctionJump = previousOdomMap.inverseTimes(_odomMap);
+        std_msgs::Float64 translation_jump;
+        translation_jump.data = correctionJump.getOrigin().length();
+        _translationJumpPub.publish(translation_jump);
+        std_msgs::Float64 rotation_jump;
+        rotation_jump.data = std::fabs(tf::getYaw(correctionJump.getRotation()));
+        _rotationJumpPub.publish(rotation_jump);
 
         if (_cfg.ndt.debug)
         {
@@ -462,7 +517,7 @@ private:
                         _cfg.tfPostdateSec
                 );
 
-        tfMsg.header.frame_id = "map";
+        tfMsg.header.frame_id = _cfg.mapFrame;
 
         // 必须是 odom。
         tfMsg.child_frame_id =
