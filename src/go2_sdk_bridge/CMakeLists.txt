@@ -11,9 +11,19 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 
-set(UNITREE_SDK_ROOT
-  /home/nvidia/unitree_sdk2_src/unitree_sdk2-main
+set(
+  UNITREE_SDK_ROOT
+  "${CMAKE_CURRENT_SOURCE_DIR}/../Unitree_SDK2"
+  CACHE PATH
+  "Path to the Unitree SDK2 source tree"
 )
+
+if(NOT EXISTS "${UNITREE_SDK_ROOT}/include/unitree/robot/go2/sport/sport_client.hpp")
+  message(FATAL_ERROR
+    "Unitree SDK2 was not found at ${UNITREE_SDK_ROOT}. "
+    "Set UNITREE_SDK_ROOT to a valid Unitree SDK2 source tree."
+  )
+endif()
 
 include_directories(
   ${catkin_INCLUDE_DIRS}

@@ -27,7 +27,7 @@ public:
     pnh_.param<double>(
         "max_vy",
         max_vy_,
-        0.10);
+        0.00);
 
     pnh_.param<double>(
         "max_wz",

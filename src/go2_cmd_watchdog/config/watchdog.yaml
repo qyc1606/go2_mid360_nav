@@ -1,5 +1,5 @@
 cmd_timeout_sec: 0.50
 
 max_vx: 0.20
-max_vy: 0.10
+max_vy: 0.0
 max_wz: 0.30

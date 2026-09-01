@@ -1,0 +1,35 @@
+robot:
+  name: go2
+  model: go2_edu
+  holonomic: false
+  footprint:
+    # GO2 body baseline. Re-measure the deployed robot's maximum outline,
+    # including legs, guards and payload, before autonomous motion tests.
+    length: 0.70
+    width: 0.31
+    vertices:
+      - [0.35, 0.155]
+      - [0.35, -0.155]
+      - [-0.35, -0.155]
+      - [-0.35, 0.155]
+
+topics:
+  lio_odom: /lio/odometry
+  lio_cloud_body: /lio/cloud_registered_body
+  nav_odom: /odom_nav
+  cloud_base: /cloud_registered_base
+  planner_cmd: /cmd_vel_nav
+  safe_cmd: /cmd_vel_safe
+
+frames:
+  map: map
+  odom: odom
+  base_footprint: base_footprint
+  base_link: base_link
+  lidar: lidar_link
+
+motion_limits:
+  max_vx: 0.20
+  max_vy: 0.0
+  max_wz: 0.30
+  cmd_timeout_sec: 0.50

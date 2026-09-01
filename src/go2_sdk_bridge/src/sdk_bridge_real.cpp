@@ -47,12 +47,12 @@ public:
     pnh_.param<double>(
         "command_timeout_sec",
         command_timeout_sec_,
-        0.30);
+        0.50);
 
     pnh_.param<double>(
         "max_vx",
         max_vx_,
-        0.30);
+        0.20);
 
     pnh_.param<double>(
         "max_vy",
@@ -62,7 +62,7 @@ public:
     pnh_.param<double>(
         "max_wz",
         max_wz_,
-        0.15);
+        0.30);
 
     pnh_.param<double>(
         "min_walk_vx",
