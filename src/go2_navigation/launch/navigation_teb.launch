@@ -1,13 +1,13 @@
 <launch>
 
-  <arg name="map_name" default="scout_map_01" />
-  <arg name="odom_topic" default="/scout/odom" />
-  <arg name="cmd_vel_topic" default="/cmd_vel" />
-  <arg name="obstacle_cloud_topic" default="/cloud_registered_body" />
+  <arg name="map_name" default="current" />
+  <arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps" />
+  <arg name="odom_topic" default="/odom_nav" />
+  <arg name="obstacle_cloud_topic" default="/cloud_registered_base" />
 
   <arg
       name="map_dir"
-      default="$(env HOME)/livox_fastlio/maps/$(arg map_name)" />
+      default="$(arg map_root)/$(arg map_name)" />
 
   <arg
       name="nav_map_yaml"
@@ -21,8 +21,8 @@
       args="$(arg nav_map_yaml)"
       output="screen">
 
-    <remap from="map" to="/nav_static_map" />
-    <remap from="map_metadata" to="/nav_static_map_metadata" />
+    <remap from="map" to="/map_2d" />
+    <remap from="map_metadata" to="/map_2d_metadata" />
 
   </node>
 
@@ -71,9 +71,10 @@
         value="$(arg obstacle_cloud_topic)" />
 
     <remap from="odom" to="$(arg odom_topic)" />
-    <remap from="cmd_vel" to="$(arg cmd_vel_topic)" />
+    <remap from="cmd_vel" to="/cmd_vel_nav" />
 
   </node>
 
-</launch>
+  <include file="$(find go2_cmd_watchdog)/launch/watchdog.launch" />
 
+</launch>

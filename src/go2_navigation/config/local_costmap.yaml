@@ -21,8 +21,8 @@ obstacle_layer:
   observation_sources: fastlio_cloud
 
   fastlio_cloud:
-    topic: /cloud_registered_body
-    sensor_frame: body
+    topic: /cloud_registered_base
+    sensor_frame: base_link
     data_type: PointCloud2
 
     marking: true
@@ -42,5 +42,4 @@ obstacle_layer:
 inflation_layer:
   inflation_radius: 0.45
   cost_scaling_factor: 4.0
-
 

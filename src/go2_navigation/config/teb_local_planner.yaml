@@ -1,14 +1,13 @@
 TebLocalPlannerROS:
   # ============================================================
-  # Scout Mini + FAST-LIO / ROS1 Noetic TEB 第一阶段基线
-  # 目标：先稳定替换 DWA；保留 0.35 m/s 线速度上限；不允许主动倒车。
+  # GO2 + FAST-LIO / ROS1 Noetic TEB 第一阶段基线
   # 第一阶段先关闭 homotopy，确认基础 TEB 正常后再打开双拓扑。
   # ============================================================
 
   # -------------------------
   # Frames / Odometry
   # -------------------------
-  odom_topic: /scout/odom
+  odom_topic: /odom_nav
   map_frame: map
 
   # -------------------------
@@ -42,25 +41,26 @@ TebLocalPlannerROS:
   # -------------------------
   # Robot / Differential Drive
   # -------------------------
-  max_vel_x: 0.35
+  max_vel_x: 0.20
   max_vel_x_backwards: 0.00
   max_vel_y: 0.0
-  max_vel_theta: 1.00
+  max_vel_theta: 0.30
 
-  acc_lim_x: 0.50
-  acc_lim_theta: 2.50
+  acc_lim_x: 0.30
+  acc_lim_y: 0.0
+  acc_lim_theta: 0.50
 
-  # Scout Mini 在当前控制模型下按差速/滑移转向处理，可原地转向。
+  # 第一阶段按非完整约束处理；GO2 可原地转向但不主动横移。
   min_turning_radius: 0.0
 
   # TEB 使用真实物理外轮廓；额外安全距离由 min_obstacle_dist 给出。
   footprint_model:
     type: "polygon"
     vertices:
-      - [ 0.370,  0.295]
-      - [ 0.370, -0.295]
-      - [-0.300, -0.295]
-      - [-0.300,  0.295]
+      - [ 0.350,  0.155]
+      - [ 0.350, -0.155]
+      - [-0.350, -0.155]
+      - [-0.350,  0.155]
 
   is_footprint_dynamic: false
 
@@ -164,4 +164,3 @@ TebLocalPlannerROS:
   oscillation_omega_eps: 0.10
   oscillation_recovery_min_duration: 10.0
   oscillation_filter_duration: 10.0
-
