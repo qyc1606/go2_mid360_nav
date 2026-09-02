@@ -23,6 +23,7 @@ public:
         pnh_("~"),
         enabled_(false),
         localization_ok_(false),
+        have_localization_status_(false),
         have_cmd_(false)
   {
     // ============================================================
@@ -48,6 +49,11 @@ public:
         "command_timeout_sec",
         command_timeout_sec_,
         0.50);
+
+    pnh_.param<double>(
+        "localization_timeout_sec",
+        localization_timeout_sec_,
+        0.75);
 
     pnh_.param<double>(
         "max_vx",
@@ -283,6 +289,14 @@ private:
     localization_ok_.store(
         msg->data);
 
+    {
+      std::lock_guard<std::mutex>
+          lock(localization_mutex_);
+      last_localization_wall_stamp_ =
+          ros::WallTime::now();
+      have_localization_status_ = true;
+    }
+
 
     if (previous &&
         !msg->data)
@@ -306,6 +320,14 @@ private:
           1.0,
           "Rejected non-finite velocity command.");
 
+      {
+        std::lock_guard<std::mutex>
+            lock(cmd_mutex_);
+        last_cmd_ = geometry_msgs::Twist();
+        have_cmd_ = false;
+      }
+      enabled_.store(false);
+      stopRobot();
       return;
     }
 
@@ -357,7 +379,7 @@ private:
     }
 
 
-    if (!localization_ok_.load())
+    if (!localizationFresh())
     {
       enabled_.store(false);
 
@@ -465,7 +487,7 @@ private:
     }
 
 
-    if (!localization_ok_.load())
+    if (!localizationFresh())
     {
       enabled_.store(false);
 
@@ -602,6 +624,27 @@ private:
         "Bridge disabled: StopMove.");
   }
 
+  bool localizationFresh()
+  {
+    if (!localization_ok_.load())
+    {
+      return false;
+    }
+
+    std::lock_guard<std::mutex>
+        lock(localization_mutex_);
+
+    if (!have_localization_status_)
+    {
+      return false;
+    }
+
+    return
+        (ros::WallTime::now() -
+         last_localization_wall_stamp_).toSec() <=
+        localization_timeout_sec_;
+  }
+
 
 private:
 
@@ -626,6 +669,14 @@ private:
 
   std::atomic<bool>
       localization_ok_;
+
+  std::mutex localization_mutex_;
+
+  ros::WallTime
+      last_localization_wall_stamp_;
+
+  bool
+      have_localization_status_;
 
 
   std::mutex cmd_mutex_;
@@ -652,6 +703,9 @@ private:
 
   double
       command_timeout_sec_;
+
+  double
+      localization_timeout_sec_;
 
   double
       max_vx_;

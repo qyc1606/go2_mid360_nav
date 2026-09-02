@@ -7,3 +7,7 @@ max_jump_yaw_deg: 20.0
 
 good_required_count: 5
 lost_required_count: 3
+
+max_ndt_score: 2.0
+max_ndt_iterations: 20
+max_last_success_age_sec: 2.0

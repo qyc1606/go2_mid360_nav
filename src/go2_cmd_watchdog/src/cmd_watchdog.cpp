@@ -4,6 +4,7 @@
 #include <std_msgs/Bool.h>
 
 #include <algorithm>
+#include <cmath>
 
 class CmdWatchdog
 {
@@ -12,6 +13,7 @@ public:
       : nh_(),
         pnh_("~"),
         localization_ok_(false),
+        have_localization_status_(false),
         have_command_(false)
   {
     pnh_.param<double>(
@@ -33,6 +35,11 @@ public:
         "max_wz",
         max_wz_,
         0.30);
+
+    pnh_.param<double>(
+        "localization_timeout_sec",
+        localization_timeout_sec_,
+        0.75);
 
     command_sub_ = nh_.subscribe(
         "/cmd_vel_nav",
@@ -69,9 +76,31 @@ private:
             value));
   }
 
+  static bool finiteTwist(
+      const geometry_msgs::Twist& msg)
+  {
+    return
+        std::isfinite(msg.linear.x) &&
+        std::isfinite(msg.linear.y) &&
+        std::isfinite(msg.linear.z) &&
+        std::isfinite(msg.angular.x) &&
+        std::isfinite(msg.angular.y) &&
+        std::isfinite(msg.angular.z);
+  }
+
   void commandCallback(
       const geometry_msgs::Twist::ConstPtr& msg)
   {
+    if (!finiteTwist(*msg))
+    {
+      have_command_ = false;
+      last_command_ = geometry_msgs::Twist();
+      ROS_ERROR_THROTTLE(
+          1.0,
+          "Rejected non-finite navigation velocity command.");
+      return;
+    }
+
     last_command_ = *msg;
     last_command_wall_time_ = ros::WallTime::now();
     have_command_ = true;
@@ -81,6 +110,8 @@ private:
       const std_msgs::Bool::ConstPtr& msg)
   {
     localization_ok_ = msg->data;
+    last_localization_wall_time_ = ros::WallTime::now();
+    have_localization_status_ = true;
   }
 
   void timerCallback(
@@ -90,9 +121,22 @@ private:
 
     bool safe = true;
 
-    if (!localization_ok_)
+    const ros::WallTime now = ros::WallTime::now();
+
+    if (!have_localization_status_ || !localization_ok_)
     {
       safe = false;
+    }
+
+    if (have_localization_status_)
+    {
+      const double localization_age_sec =
+          (now - last_localization_wall_time_).toSec();
+
+      if (localization_age_sec > localization_timeout_sec_)
+      {
+        safe = false;
+      }
     }
 
     if (!have_command_)
@@ -103,7 +147,7 @@ private:
     if (have_command_)
     {
       const double age_sec =
-          (ros::WallTime::now() -
+          (now -
            last_command_wall_time_).toSec();
 
       if (age_sec > command_timeout_sec_)
@@ -146,14 +190,17 @@ private:
 
   geometry_msgs::Twist last_command_;
   ros::WallTime last_command_wall_time_;
+  ros::WallTime last_localization_wall_time_;
 
   bool localization_ok_;
+  bool have_localization_status_;
   bool have_command_;
 
   double command_timeout_sec_;
   double max_vx_;
   double max_vy_;
   double max_wz_;
+  double localization_timeout_sec_;
 };
 
 int main(

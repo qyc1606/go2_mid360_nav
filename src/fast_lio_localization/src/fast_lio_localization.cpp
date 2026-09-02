@@ -68,6 +68,10 @@ public:
         double threshRot = M_PI / 12;
         double minScanRange = 1.0;
         double maxScanRange = 100;
+        double maxFitnessScore = 2.0;
+        double maxTranslationJump = 0.8;
+        double maxRotationJump = 20.0 * M_PI / 180.0;
+        double maxAlignmentAgeSec = 1.0;
     } ndt;
 
     explicit Config(ros::NodeHandle &nh) : _nh(nh)
@@ -96,6 +100,16 @@ public:
         _nh.getParam("ndt/thresh_rot", ndt.threshRot);
         _nh.getParam("ndt/min_scan_range", ndt.minScanRange);
         _nh.getParam("ndt/max_scan_range", ndt.maxScanRange);
+        _nh.param("ndt/max_fitness_score", ndt.maxFitnessScore, 2.0);
+        _nh.param("ndt/max_translation_jump", ndt.maxTranslationJump, 0.8);
+        _nh.param(
+                "ndt/max_rotation_jump",
+                ndt.maxRotationJump,
+                20.0 * M_PI / 180.0);
+        _nh.param(
+                "ndt/max_alignment_age_sec",
+                ndt.maxAlignmentAgeSec,
+                1.0);
 
         ROS_INFO("fast_lio_localization config:");
         ROS_INFO("  odom_frame      = %s", odomFrame.c_str());
@@ -128,6 +142,8 @@ public:
                 "/localization/translation_jump", 10, true);
         _rotationJumpPub = _nh.advertise<std_msgs::Float64>(
                 "/localization/rotation_jump", 10, true);
+        _lastSuccessAgePub = _nh.advertise<std_msgs::Float64>(
+                "/localization/last_success_age", 10, true);
 
         _mapSub = _nh.subscribe(
                 "/map_cloud",
@@ -198,6 +214,7 @@ private:
     ros::Publisher _iterationsPub;
     ros::Publisher _translationJumpPub;
     ros::Publisher _rotationJumpPub;
+    ros::Publisher _lastSuccessAgePub;
 
     tf2_ros::TransformBroadcaster _br;
 
@@ -223,6 +240,48 @@ private:
     tf::Pose _odomMap;
 
     sensor_msgs::PointCloud2::ConstPtr _pcPtr = nullptr;
+    bool _haveValidAlignment = false;
+    ros::WallTime _lastSuccessWallTime;
+    bool _haveAlignmentAttempt = false;
+    ros::WallTime _lastAlignmentAttemptWallTime;
+
+
+    static bool finitePose(const geometry_msgs::Pose &pose)
+    {
+        const double qNormSquared =
+                pose.orientation.x * pose.orientation.x +
+                pose.orientation.y * pose.orientation.y +
+                pose.orientation.z * pose.orientation.z +
+                pose.orientation.w * pose.orientation.w;
+
+        return
+                std::isfinite(pose.position.x) &&
+                std::isfinite(pose.position.y) &&
+                std::isfinite(pose.position.z) &&
+                std::isfinite(pose.orientation.x) &&
+                std::isfinite(pose.orientation.y) &&
+                std::isfinite(pose.orientation.z) &&
+                std::isfinite(pose.orientation.w) &&
+                std::isfinite(qNormSquared) &&
+                qNormSquared > 1e-12;
+    }
+
+
+    static bool finiteTransform(const tf::Transform &transform)
+    {
+        const tf::Vector3 &origin = transform.getOrigin();
+        const tf::Quaternion &rotation = transform.getRotation();
+        return
+                std::isfinite(origin.x()) &&
+                std::isfinite(origin.y()) &&
+                std::isfinite(origin.z()) &&
+                std::isfinite(rotation.x()) &&
+                std::isfinite(rotation.y()) &&
+                std::isfinite(rotation.z()) &&
+                std::isfinite(rotation.w()) &&
+                std::isfinite(rotation.length2()) &&
+                rotation.length2() > 1e-12;
+    }
 
 
     void mapCallback(
@@ -242,6 +301,12 @@ private:
     void initPoseCallback(
             const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
     {
+        if (!finitePose(msg->pose.pose))
+        {
+            ROS_ERROR("Rejected non-finite initial pose");
+            return;
+        }
+
         auto &q = msg->pose.pose.orientation;
         auto &p = msg->pose.pose.position;
 
@@ -270,6 +335,12 @@ private:
     void initPoseWithNDTCallback(
             const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
     {
+        if (!finitePose(msg->pose.pose))
+        {
+            ROS_ERROR("Rejected non-finite initial pose");
+            return;
+        }
+
         if (_pcPtr == nullptr)
         {
             ROS_WARN("No point cloud");
@@ -295,12 +366,13 @@ private:
                 )
         );
 
-        match(
+        if (match(
                 _pcPtr,
                 baseMap
-        );
-
-        publishTF();
+        ))
+        {
+            publishTF();
+        }
     }
 
 
@@ -310,10 +382,21 @@ private:
     {
         _pcPtr = pcMsg;
 
+        if (!finitePose(odomMsg->pose.pose))
+        {
+            ROS_ERROR_THROTTLE(
+                    1.0,
+                    "Rejected non-finite odometry pose");
+            return;
+        }
+
         tf::poseMsgToTF(
                 odomMsg->pose.pose,
                 _baseOdom
         );
+        tf::Quaternion normalizedOdomRotation = _baseOdom.getRotation();
+        normalizedOdomRotation.normalize();
+        _baseOdom.setRotation(normalizedOdomRotation);
 
         static tf::Pose lastNDTPose = _baseOdom;
 
@@ -335,20 +418,37 @@ private:
                         )
                 );
 
+        const bool periodicRefresh =
+                _haveValidAlignment &&
+                (!_haveAlignmentAttempt ||
+                 (ros::WallTime::now() -
+                  _lastAlignmentAttemptWallTime).toSec() >
+                 _cfg.ndt.maxAlignmentAgeSec);
+
         if (shift > _cfg.ndt.threshShift ||
-            rotation > _cfg.ndt.threshRot)
+            rotation > _cfg.ndt.threshRot ||
+            periodicRefresh)
         {
-            match(
+            if (match(
                     pcMsg,
                     _odomMap * _baseOdom
-            );
-
-            lastNDTPose = _baseOdom;
+            ))
+            {
+                lastNDTPose = _baseOdom;
+            }
         }
 
-        // 即使没有触发新的 NDT，
-        // 也持续重新发布当前 map -> odom 修正值。
-        publishTF();
+        if (_haveValidAlignment)
+        {
+            publishLocalization(
+                    _odomMap * _baseOdom
+            );
+            publishLastSuccessAge();
+
+            // 即使没有触发新的 NDT，
+            // 也持续重新发布当前 map -> odom 修正值。
+            publishTF();
+        }
     }
 
 
@@ -358,10 +458,19 @@ private:
      * @param pcPtr  The point cloud for matching.
      * @param baseMap The guess matrix.
      */
-    void match(
+    bool match(
             const sensor_msgs::PointCloud2::ConstPtr &pcPtr,
             const tf::Transform &baseMap)
     {
+        _lastAlignmentAttemptWallTime = ros::WallTime::now();
+        _haveAlignmentAttempt = true;
+
+        if (!finiteTransform(baseMap))
+        {
+            ROS_ERROR("NDT rejected: non-finite initial transform");
+            return false;
+        }
+
         static chrono::steady_clock::time_point t0;
         static chrono::steady_clock::time_point t1;
 
@@ -405,6 +514,12 @@ private:
             }
         }
 
+        if (scanCloudPtr->empty())
+        {
+            ROS_ERROR("NDT rejected: filtered scan is empty");
+            return false;
+        }
+
         _ndt.setInputSource(
                 scanCloudPtr
         );
@@ -435,8 +550,33 @@ private:
             t1 = chrono::steady_clock::now();
         }
 
-        auto tNDT =
+        const auto tNDT =
                 _ndt.getFinalTransformation();
+
+        const bool converged = _ndt.hasConverged();
+        const double fitnessScore = _ndt.getFitnessScore();
+        const int finalIterations = _ndt.getFinalNumIteration();
+
+        std_msgs::Float64 score;
+        score.data = fitnessScore;
+        _scorePub.publish(score);
+        std_msgs::Int32 iterations;
+        iterations.data = finalIterations;
+        _iterationsPub.publish(iterations);
+
+        if (!converged ||
+            !std::isfinite(fitnessScore) ||
+            fitnessScore > _cfg.ndt.maxFitnessScore ||
+            !tNDT.allFinite())
+        {
+            ROS_ERROR(
+                    "NDT rejected: converged=%d score=%.6f limit=%.6f finite=%d",
+                    converged,
+                    fitnessScore,
+                    _cfg.ndt.maxFitnessScore,
+                    tNDT.allFinite());
+            return false;
+        }
 
         tf::Transform baseMapNDT;
 
@@ -446,6 +586,12 @@ private:
                 ),
                 baseMapNDT
         );
+
+        if (!finiteTransform(baseMapNDT))
+        {
+            ROS_ERROR("NDT rejected: non-finite aligned pose");
+            return false;
+        }
 
         // 计算：
         //
@@ -460,30 +606,52 @@ private:
         //
         // 发布。
         const tf::Transform previousOdomMap = _odomMap;
-        _odomMap =
+        const tf::Transform candidateOdomMap =
                 baseMapNDT *
                 _baseOdom.inverse();
 
-        geometry_msgs::PoseStamped localization;
-        localization.header.stamp = ros::Time::now();
-        localization.header.frame_id = _cfg.mapFrame;
-        tf::poseTFToMsg(baseMapNDT, localization.pose);
-        _localizationPub.publish(localization);
+        if (!finiteTransform(candidateOdomMap))
+        {
+            ROS_ERROR("NDT rejected: non-finite map-to-odom correction");
+            return false;
+        }
 
-        std_msgs::Float64 score;
-        score.data = _ndt.getFitnessScore();
-        _scorePub.publish(score);
-        std_msgs::Int32 iterations;
-        iterations.data = _ndt.getFinalNumIteration();
-        _iterationsPub.publish(iterations);
+        const tf::Transform correctionJump =
+                previousOdomMap.inverseTimes(candidateOdomMap);
+        const double translationJump = correctionJump.getOrigin().length();
+        const double rotationJump =
+                std::fabs(tf::getYaw(correctionJump.getRotation()));
 
-        const tf::Transform correctionJump = previousOdomMap.inverseTimes(_odomMap);
+        if (!std::isfinite(translationJump) ||
+            !std::isfinite(rotationJump))
+        {
+            ROS_ERROR("NDT rejected: non-finite correction jump");
+            return false;
+        }
+
+        if (_haveValidAlignment &&
+            (translationJump > _cfg.ndt.maxTranslationJump ||
+             rotationJump > _cfg.ndt.maxRotationJump))
+        {
+            ROS_ERROR(
+                    "NDT rejected: correction jump %.3f m / %.3f rad",
+                    translationJump,
+                    rotationJump);
+            return false;
+        }
+
         std_msgs::Float64 translation_jump;
-        translation_jump.data = correctionJump.getOrigin().length();
+        translation_jump.data = _haveValidAlignment ? translationJump : 0.0;
         _translationJumpPub.publish(translation_jump);
         std_msgs::Float64 rotation_jump;
-        rotation_jump.data = std::fabs(tf::getYaw(correctionJump.getRotation()));
+        rotation_jump.data = _haveValidAlignment ? rotationJump : 0.0;
         _rotationJumpPub.publish(rotation_jump);
+
+        _odomMap = candidateOdomMap;
+        _haveValidAlignment = true;
+        _lastSuccessWallTime = ros::WallTime::now();
+        publishLastSuccessAge();
+        publishLocalization(baseMapNDT);
 
         if (_cfg.ndt.debug)
         {
@@ -496,16 +664,57 @@ private:
         }
 
         ROS_INFO("NDT Relocated");
+        return true;
+    }
+
+
+    void publishLocalization(
+            const tf::Transform &baseMap)
+    {
+        if (!finiteTransform(baseMap))
+        {
+            ROS_ERROR_THROTTLE(
+                    1.0,
+                    "Suppressed non-finite localization pose");
+            return;
+        }
+
+        geometry_msgs::PoseStamped localization;
+        localization.header.stamp = ros::Time::now();
+        localization.header.frame_id = _cfg.mapFrame;
+        tf::poseTFToMsg(baseMap, localization.pose);
+        _localizationPub.publish(localization);
+    }
+
+
+    void publishLastSuccessAge()
+    {
+        if (!_haveValidAlignment)
+        {
+            return;
+        }
+
+        std_msgs::Float64 age;
+        age.data =
+                (ros::WallTime::now() -
+                 _lastSuccessWallTime).toSec();
+        _lastSuccessAgePub.publish(age);
     }
 
 
     void publishTF()
     {
+        if (!_haveValidAlignment ||
+            !finiteTransform(_odomMap))
+        {
+            return;
+        }
+
         geometry_msgs::TransformStamped tfMsg;
 
         // 关键修改：
         //
-        // map -> odom 向未来预发布 0.25 秒，
+        // map -> odom 按 tf_postdate_sec 向未来预发布，
         // 避免 TEB 查询当前时刻 TF 时，
         // 最新 map -> odom 尚落后几十毫秒而出现：
         //

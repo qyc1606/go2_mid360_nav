@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Validate canonical GO2 launch graphs without starting ROS nodes."""
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -19,27 +18,24 @@ EXPECTED = {
     "go2_navigation.launch": {"move_base", "go2_cmd_watchdog"},
 }
 
+FORBIDDEN_PACKAGES = {
+    "ego_planner",
+    "ego_planner_node",
+    "go2_sdk_bridge",
+}
 
-def listed_nodes(launch_name):
-    result = subprocess.run(
-        [
-            "roslaunch",
-            "--nodes",
-            "go2_system_bringup",
-            launch_name,
-            "start_lidar:=false",
-        ],
-        check=False,
-        text=True,
-        capture_output=True,
+FORBIDDEN_TOKENS = ("ego", "sdk_bridge_real")
+
+
+def expanded_nodes(launch_name):
+    import roslaunch.config
+
+    launch_path = LAUNCH_DIR / launch_name
+    config = roslaunch.config.load_config_default(
+        [(str(launch_path), ["start_lidar:=false"])],
+        None,
     )
-    if result.returncode:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
-    return {
-        line.strip().rsplit("/", 1)[-1]
-        for line in result.stdout.splitlines()
-        if line.strip().startswith("/")
-    }
+    return config.nodes
 
 
 def validate():
@@ -49,15 +45,24 @@ def validate():
         if "ego" in launch_text.lower():
             failures.append(f"{launch_name}: active EGO reference")
         try:
-            actual = listed_nodes(launch_name)
-        except RuntimeError as error:
+            nodes = expanded_nodes(launch_name)
+        except Exception as error:
             failures.append(f"{launch_name}: roslaunch failed: {error}")
             continue
+        actual = {node.name.rsplit("/", 1)[-1] for node in nodes}
         missing = expected - actual
         if missing:
             failures.append(f"{launch_name}: missing nodes {sorted(missing)}")
-        if any("ego" in node.lower() for node in actual):
-            failures.append(f"{launch_name}: EGO node remains active")
+        for node in nodes:
+            identity = f"{node.package}/{node.type}/{node.name}".lower()
+            if node.package.lower() in FORBIDDEN_PACKAGES:
+                failures.append(
+                    f"{launch_name}: forbidden package {node.package}"
+                )
+            if any(token in identity for token in FORBIDDEN_TOKENS):
+                failures.append(
+                    f"{launch_name}: forbidden expanded node {identity}"
+                )
         print(f"PASS {launch_name}: {', '.join(sorted(actual))}")
     return failures
 

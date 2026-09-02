@@ -6,8 +6,10 @@ import math
 import time
 
 
-def validate_command(vx, vy, wz, max_vx=0.20, max_wz=0.30):
-    values = (vx, vy, wz)
+def validate_command(
+    vx, vy, wz, max_vx=0.20, max_wz=0.30, *, vz=0.0, wx=0.0, wy=0.0
+):
+    values = (vx, vy, vz, wx, wy, wz)
     if not all(math.isfinite(value) for value in values):
         return "non-finite command"
     if abs(vy) > 1e-6:
@@ -42,6 +44,9 @@ def main():
             message.angular.z,
             args.max_vx,
             args.max_wz,
+            vz=message.linear.z,
+            wx=message.angular.x,
+            wy=message.angular.y,
         )
         if error:
             errors.append(error)
@@ -56,6 +61,9 @@ def main():
 
     if errors:
         print(f"FAIL {errors[0]}")
+        return 1
+    if message_count == 0:
+        print(f"FAIL no commands observed on {args.topic}")
         return 1
     print(f"PASS checked {message_count} command(s) on {args.topic}")
     return 0

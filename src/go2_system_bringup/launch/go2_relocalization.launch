@@ -16,6 +16,10 @@
     <param name="localization_topic" value="/localization"/>
     <param name="health_topic" value="/localization/ok"/>
     <param name="tf_postdate_sec" value="0.50"/>
+    <param name="ndt/max_fitness_score" value="2.0"/>
+    <param name="ndt/max_translation_jump" value="0.8"/>
+    <param name="ndt/max_rotation_jump" value="0.349066"/>
+    <param name="ndt/max_alignment_age_sec" value="1.0"/>
   </node>
   <include file="$(find go2_localization_guard)/launch/guard.launch"/>
 </launch>
