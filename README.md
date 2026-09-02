@@ -36,7 +36,13 @@ roslaunch go2_system_bringup go2_mapping.launch map_name:=site01
 roslaunch go2_system_bringup go2_localization.launch map_name:=site01
 
 # Navigation (real Unitree bridge is separate and remains disabled)
-roslaunch go2_navigation navigation_teb.launch map_name:=site01
+roslaunch go2_system_bringup go2_navigation.launch map_name:=site01
+
+# Static launch-graph validation; this starts no ROS nodes
+python3 scripts/validate_launch_contracts.py
+
+# Read-only command check after a navigation dry run
+python3 scripts/check_cmd_vel.py --duration 10
 ```
 
 These canonical launch files are introduced incrementally on the

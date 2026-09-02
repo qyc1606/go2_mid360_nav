@@ -2,11 +2,18 @@
   <arg name="map_name" default="current"/>
   <arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps"/>
   <arg name="start_lidar" default="true"/>
+  <arg name="map_dir" default="$(arg map_root)/$(arg map_name)"/>
+  <arg name="nav_map_yaml" default="$(arg map_dir)/map_raw.yaml"/>
   <group if="$(arg start_lidar)">
     <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
   </group>
   <include file="$(find go2_system_bringup)/launch/11_fastlio_local_odom.launch"/>
   <include file="$(find go2_system_bringup)/launch/20_robot_frames.launch"/>
+  <node pkg="map_server" type="map_server" name="go2_localization_map_server"
+        args="$(arg nav_map_yaml)" output="screen">
+    <remap from="map" to="/map_2d"/>
+    <remap from="map_metadata" to="/map_2d_metadata"/>
+  </node>
   <include file="$(find go2_system_bringup)/launch/go2_relocalization.launch">
     <arg name="map_name" value="$(arg map_name)"/>
     <arg name="map_root" value="$(arg map_root)"/>

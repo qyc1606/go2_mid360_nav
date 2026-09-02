@@ -1,0 +1,17 @@
+<launch>
+  <arg name="map_name" default="current"/>
+  <arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps"/>
+  <arg name="start_lidar" default="true"/>
+
+  <include file="$(find go2_system_bringup)/launch/go2_localization.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+    <arg name="start_lidar" value="$(arg start_lidar)"/>
+  </include>
+
+  <include file="$(find go2_navigation)/launch/navigation_teb.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+    <arg name="start_map_server" value="false"/>
+  </include>
+</launch>
