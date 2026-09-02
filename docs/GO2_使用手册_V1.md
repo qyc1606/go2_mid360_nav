@@ -161,6 +161,8 @@ map_raw.yaml
 
 `public_map.pcd` 供 NDT 定位使用，`map_raw.yaml` 供 move_base 全局 costmap 使用。缺少任何一个文件都不要进入导航测试。
 
+`finalize_map.py` 会分别使用 `corridor_raw.yaml` 生成不预膨胀的 `map_raw.pgm`，以及使用 `corridor_nav.yaml` 生成带可视化障碍膨胀的 `map.pgm`。move_base 加载的是 `map_raw.yaml`，障碍安全距离由 costmap 在运行时管理，不应在 raw 地图中重复膨胀。
+
 ## 3. 第二次测试：单独验证 NDT 定位
 
 ### 3.1 终端 1：启动定位
@@ -413,6 +415,7 @@ ls -lh maps/site01/public_map.pcd \
 | RViz 的 Fixed Frame 没有 `map` | `roscore`、`fast_lio_localization` 节点和临时 `map→odom` 是否正常发布 |
 | `/localization/ok` 为 false | NDT score、刷新周期、TF、点云地图重合 |
 | 无全局路径 | `/map_2d`、目标是否在自由区域、`map→base_link` |
+| 地图大部分是灰色且无路径 | 灰色为未知区，不要直接开启 `allow_unknown`；重新运行最新 `finalize_map.py`，确认 `map_raw` 使用 raw 配置且未重复膨胀 |
 | 有路径但无 `/cmd_vel_nav` | TEB 状态、local costmap、目标是否已取消 |
 | SDK2 启动失败 | `eth1` 地址、GO2 网络、Unitree SDK2 日志 |
 | SDK2 使能返回 false | `/localization/ok` 和 `/cmd_vel_safe` 是否存在且新鲜 |

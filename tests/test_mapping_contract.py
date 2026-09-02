@@ -1,9 +1,18 @@
+import importlib.util
 from pathlib import Path
 
 import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_script(name):
+    path = ROOT / "scripts" / name
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_mapping_disables_fast_lio_native_pcd():
@@ -85,3 +94,26 @@ def test_finalize_map_uses_atomic_replacement():
     assert "public_map.pcd" in script
     assert "map_raw.pgm" in script
     assert "map_raw.yaml" in script
+
+
+def test_finalize_map_applies_distinct_raw_and_navigation_configs():
+    finalize = load_script("finalize_map.py")
+    source = Path("/maps/site01/public_map.pcd")
+    raw = finalize.build_converter_command(
+        source,
+        Path("/tmp/map_raw.pgm"),
+        Path("/tmp/map_raw.yaml"),
+        ROOT / "src/go2_map_tools/config/corridor_raw.yaml",
+    )
+    nav = finalize.build_converter_command(
+        source,
+        Path("/tmp/map.pgm"),
+        Path("/tmp/map.yaml"),
+        ROOT / "src/go2_map_tools/config/corridor_nav.yaml",
+    )
+    for command in (raw, nav):
+        assert "_floor_min_z:=-0.55" in command
+        assert "_floor_max_z:=-0.05" in command
+        assert "_free_dilation_m:=0.2" in command
+    assert "_obstacle_inflation_m:=0.0" in raw
+    assert "_obstacle_inflation_m:=0.3" in nav
