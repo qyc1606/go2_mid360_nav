@@ -7,6 +7,7 @@
 | 建图 | `roslaunch go2_system_bringup go2_mapping.launch map_name:=site01` | `laserMapping`、`go2_pointcloud_mapper` | 不启动 |
 | 定位 | `roslaunch go2_system_bringup go2_localization.launch map_name:=site01` | `laserMapping`、`fast_lio_localization`、`go2_localization_guard` | 不启动 |
 | 导航 | `roslaunch go2_system_bringup go2_navigation.launch map_name:=site01` | 上述定位节点、`move_base`、`go2_cmd_watchdog` | 不启动 |
+| 实机执行 | `roslaunch go2_sdk_bridge sdk_bridge_real.launch network_interface:=eth1` | `go2_sdk_bridge_real` | 启动但默认禁用，需人工调用 `/go2_sdk_bridge_real/enable` |
 
 静态检查：
 
@@ -27,6 +28,13 @@ python3 scripts/validate_launch_contracts.py
 | `/localization/ok` | guard → 安全层 | 定位健康门 | 导航前稳定为 true |
 | `/cmd_vel_nav` | move_base/TEB → watchdog | 未执行的规划速度 | `vy=0` 且不超限 |
 | `/cmd_vel_safe` | watchdog → SDK bridge | 安全过滤后的速度 | 定位失败或超时时为零 |
+
+SDK2 人工闭锁：
+
+```bash
+rosservice call /go2_sdk_bridge_real/enable "data: true"   # 仅在全部安全检查通过后使能
+rosservice call /go2_sdk_bridge_real/enable "data: false"  # 立即禁用并发送 StopMove
+```
 
 ## TF 树
 
@@ -61,5 +69,6 @@ rostopic hz /cloud_registered_base
 - [ ] TEB footprint 已按实机最大轮廓复测。
 - [ ] `/cmd_vel_nav` 满足 `vx≤0.20`、`vy=0`、`|wz|≤0.30`。
 - [ ] 真实 SDK 桥接没有随导航入口自动启动。
+- [ ] 先取消空跑阶段的旧目标，并确认 `/cmd_vel_safe` 已连续为零。
+- [ ] SDK2 启动时日志显示 `DISABLED`，未提前人工使能。
 - [ ] 首次实机测试具备现场监护、实体急停和足够净空。
-

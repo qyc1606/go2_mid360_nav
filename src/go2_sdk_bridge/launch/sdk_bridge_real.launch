@@ -1,0 +1,24 @@
+<launch>
+  <!-- Starts the real SDK2 transport, but the node remains motion-disabled
+       until /go2_sdk_bridge_real/enable is called with data=true. -->
+  <arg name="network_interface" default="eth1"/>
+
+  <node pkg="go2_sdk_bridge"
+        type="go2_sdk_bridge_real_node"
+        name="go2_sdk_bridge_real"
+        output="screen"
+        required="true">
+    <param name="network_interface" value="$(arg network_interface)"/>
+    <param name="command_topic" value="/cmd_vel_safe"/>
+    <param name="localization_ok_topic" value="/localization/ok"/>
+    <param name="command_timeout_sec" value="0.50"/>
+    <param name="localization_timeout_sec" value="0.75"/>
+    <param name="max_vx" value="0.20"/>
+    <param name="max_vy" value="0.0"/>
+    <param name="max_wz" value="0.30"/>
+    <param name="min_walk_vx" value="0.05"/>
+    <param name="stop_deadband_vx" value="0.03"/>
+    <param name="stop_deadband_wz" value="0.03"/>
+    <param name="control_rate_hz" value="50.0"/>
+  </node>
+</launch>

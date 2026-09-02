@@ -73,7 +73,7 @@ public:
     pnh_.param<double>(
         "min_walk_vx",
         min_walk_vx_,
-        0.25);
+        0.05);
 
     pnh_.param<double>(
         "stop_deadband_vx",
