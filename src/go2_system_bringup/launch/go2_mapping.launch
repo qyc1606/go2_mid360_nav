@@ -14,7 +14,7 @@
     <arg name="map_name" value="$(arg map_name)"/>
     <arg name="map_root" value="$(arg map_root)"/>
     <arg name="map_dir" value="$(arg map_dir)"/>
-    <arg name="input_cloud" value="/cloud_registered_base"/>
+    <arg name="input_cloud" value="/cloud_registered_odom"/>
     <arg name="input_odom" value="/odom_nav"/>
     <arg name="output_path" value="$(arg map_dir)/public_map.pcd"/>
   </include>

@@ -1,4 +1,4 @@
-input_cloud: /cloud_registered_base
+input_cloud: /cloud_registered_odom
 input_odom: /odom_nav
 static_scan_topic: /go2/static_scan
 static_map_topic: /go2/static_map_cloud
@@ -15,7 +15,7 @@ radius_filter:
   radius: 0.15
   min_neighbors: 2
 
-# Coordinates are in the FAST-LIO body frame obtained from /Odometry.
+# Points and odometry poses are both expressed in the public odom frame.
 # Measure these limits on the real robot before enabling this filter.
 self_filter:
   enable: false

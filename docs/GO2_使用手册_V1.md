@@ -61,6 +61,17 @@ ip neigh show dev eth1
 
 本机当前 GO2 网口是 `eth1`，地址应在 `192.168.123.0/24`；当前 Jetson 配置为 `192.168.123.199/24`。如果现场接线使用了别的接口，后面的 `network_interface:=eth1` 必须一并修改。
 
+### 1.5 终端 0：单独启动 ROS Master
+
+在一个终端启动 `roscore`，并在整个建图、定位和导航测试期间保持该终端运行：
+
+```bash
+source /opt/ros/noetic/setup.bash
+roscore
+```
+
+等待出现 `started core service [/rosout]`后，再打开后续终端。`roslaunch` 在没有 ROS Master 时本可以自动启动一个，但实机多终端测试明确单独运行 `roscore` 更容易检查和停机。
+
 ## 2. 第一次测试：建立点云地图
 
 建图时使用原厂遥控器让 GO2 缓慢行走，不启动本工程的真实 SDK2 桥接。
@@ -83,14 +94,20 @@ roslaunch go2_system_bringup go2_mapping.launch map_name:=site01
 ```bash
 cd ~/go2_mid360_nav
 source devel/setup.bash
+rosparam get /go2_pointcloud_mapper/input_cloud
+rostopic echo -n 1 /cloud_registered_odom/header
+rostopic echo -n 1 /odom_nav/header
 rostopic hz /livox/lidar
 rostopic hz /livox/imu
 rostopic hz /odom_nav
 rostopic hz /cloud_registered_base
+rostopic hz /cloud_registered_odom
 rostopic hz /go2/static_map_cloud
 ```
 
-每条命令观察数秒后按 `Ctrl+C` 结束当前观察，再执行下一条。应持续有频率输出，不能反复出现时间倒退、TF 错误或点云为空。
+首条命令必须输出 `/cloud_registered_odom`，后两条 header 的 `frame_id` 都必须是 `odom`。如果出现 `Mapper frame mismatch`，立即停止建图，不要继续走。
+
+其他频率命令每条观察数秒后按 `Ctrl+C` 结束当前观察，再执行下一条。应持续有频率输出，不能反复出现时间倒退、TF 错误或点云为空。`/cloud_registered_base` 应是 `base_link` 坐标系，供 RViz 和局部障碍检查；`/cloud_registered_odom` 应是 `odom` 坐标系，这才是 mapper 累积全局地图的输入。
 
 可另外打开 RViz：
 
@@ -361,7 +378,8 @@ rosservice call /go2_sdk_bridge_real/enable "data: true"
 4. 在 SDK2 终端按一次 `Ctrl+C`，等待 `StopMove sent` 日志；
 5. 在统一导航终端按一次 `Ctrl+C`；
 6. 关闭 RViz 和检查终端；
-7. 最后再关闭 GO2 和 Jetson 电源。
+7. 回到终端 0，按 `Ctrl+C` 停止 `roscore`；
+8. 最后再关闭 GO2 和 Jetson 电源。
 
 建图模式停止前必须先调用地图保存服务；导航模式不需要保存地图。
 

@@ -22,11 +22,36 @@ def test_mapping_uses_named_map_directory_and_go2_topics():
         '<arg name="map_name" default="current_mapping"/>',
         '<arg name="map_root" default="$(env HOME)/go2_mid360_nav/maps"/>',
         '<arg name="map_dir" default="$(arg map_root)/$(arg map_name)"/>',
-        "/cloud_registered_base",
+        "/cloud_registered_odom",
         "/odom_nav",
         "$(arg map_dir)/public_map.pcd",
     ):
         assert fragment in text
+
+
+def test_mapping_expands_mapper_with_world_cloud_matching_odom_frame():
+    import roslaunch.config
+
+    launch_path = (
+        ROOT / "src/go2_system_bringup/launch/go2_mapping.launch"
+    )
+    config = roslaunch.config.load_config_default(
+        [
+            (
+                str(launch_path),
+                ["start_lidar:=false", "map_name:=contract_test"],
+            )
+        ],
+        None,
+    )
+    assert (
+        config.params["/go2_pointcloud_mapper/input_cloud"].value
+        == "/cloud_registered_odom"
+    )
+    assert (
+        config.params["/go2_pointcloud_mapper/input_odom"].value
+        == "/odom_nav"
+    )
 
 
 def test_mapper_only_writes_on_explicit_save_request():
@@ -35,7 +60,7 @@ def test_mapper_only_writes_on_explicit_save_request():
             ROOT / "src/go2_pointcloud_mapper/config/mapper.yaml"
         ).read_text(encoding="utf-8")
     )
-    assert cfg["input_cloud"] == "/cloud_registered_base"
+    assert cfg["input_cloud"] == "/cloud_registered_odom"
     assert cfg["input_odom"] == "/odom_nav"
     assert cfg["map"]["autosave_period"] == 0.0
     assert cfg["map"]["save_on_shutdown"] is False
