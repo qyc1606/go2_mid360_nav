@@ -61,3 +61,10 @@ use `main` for the previous tracked implementation.
 See `docs/superpowers/specs/2026-09-01-go2-scout-teb-migration-design.md` for
 the approved design and `docs/superpowers/plans/2026-09-01-go2-scout-teb-migration.md`
 for the staged implementation and validation plan.
+
+Operator and handoff documents:
+
+- [`docs/GO2_开发文档_V1.md`](docs/GO2_开发文档_V1.md)
+- [`docs/GO2_使用手册_V1.md`](docs/GO2_使用手册_V1.md)
+- [`docs/GO2_话题_启动文件_TF_检查表_V1.md`](docs/GO2_话题_启动文件_TF_检查表_V1.md)
+- [`docs/acceptance/non_motion_acceptance.md`](docs/acceptance/non_motion_acceptance.md)
