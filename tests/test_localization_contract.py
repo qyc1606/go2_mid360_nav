@@ -56,6 +56,20 @@ def test_ndt_exposes_localization_pose_and_quality_metrics():
         assert value in text
 
 
+def test_ndt_owns_and_publishes_provisional_map_to_odom_before_alignment():
+    text = (
+        ROOT / "src/fast_lio_localization/src/fast_lio_localization.cpp"
+    ).read_text(encoding="utf-8")
+    assert "ros::Timer _tfPublishTimer" in text
+    assert "&Localizer::publishTFTimer" in text
+    assert "Publishing provisional identity map -> odom" in text
+
+    publish_tf = text.split("void publishTF()", 1)[1]
+    publish_tf = publish_tf.split("\n    }", 1)[0]
+    assert "_haveValidAlignment" not in publish_tf
+    assert "finiteTransform(_odomMap)" in publish_tf
+
+
 def test_localization_guard_consumes_ndt_pose():
     text = (
         ROOT / "src/go2_localization_guard/config/guard.yaml"

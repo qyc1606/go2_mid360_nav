@@ -202,6 +202,13 @@ public:
         _ndt.setMaximumIterations(_cfg.ndt.maximumIterations);
 
         _odomMap.setIdentity();
+        _tfPublishTimer = _nh.createTimer(
+                ros::Duration(0.10),
+                &Localizer::publishTFTimer,
+                this);
+        ROS_WARN(
+                "Publishing provisional identity map -> odom until the "
+                "first valid NDT alignment; localization remains unhealthy");
     }
 
 private:
@@ -215,6 +222,7 @@ private:
     ros::Publisher _translationJumpPub;
     ros::Publisher _rotationJumpPub;
     ros::Publisher _lastSuccessAgePub;
+    ros::Timer _tfPublishTimer;
 
     tf2_ros::TransformBroadcaster _br;
 
@@ -702,10 +710,15 @@ private:
     }
 
 
+    void publishTFTimer(const ros::TimerEvent &)
+    {
+        publishTF();
+    }
+
+
     void publishTF()
     {
-        if (!_haveValidAlignment ||
-            !finiteTransform(_odomMap))
+        if (!finiteTransform(_odomMap))
         {
             return;
         }

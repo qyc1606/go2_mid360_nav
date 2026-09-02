@@ -188,6 +188,8 @@ rviz
 4. 添加 PointCloud2 `/cloud_registered_base`；
 5. 使用 `2D Pose Estimate` 在地图上给出 GO2 当前大致位置和朝向。
 
+定位节点启动后会先由同一个 TF 发布者给出临时单位变换 `map→odom`，以便 RViz 能选择 `map` 并发送初始位姿。此时 `/localization/ok` 仍必须是 `false`，临时 TF 不代表定位成功。NDT 首次匹配成功后，该节点会把它更新为真实的 `map→odom`。
+
 初值必须尽量准确。等待 NDT 成功后，历史地图与实时点云应稳定重合。
 
 ### 3.3 终端 3：定位验收
@@ -408,6 +410,7 @@ ls -lh maps/site01/public_map.pcd \
 | 地图没有保存 | 是否调用 `/go2_pointcloud_mapper/save_map`，服务是否返回 true |
 | `finalize_map.py` 报缺少 PCD | 地图名是否一致，`public_map.pcd` 是否存在 |
 | NDT 不收敛 | 地图名、初始位姿、实时点云、雷达外参 |
+| RViz 的 Fixed Frame 没有 `map` | `roscore`、`fast_lio_localization` 节点和临时 `map→odom` 是否正常发布 |
 | `/localization/ok` 为 false | NDT score、刷新周期、TF、点云地图重合 |
 | 无全局路径 | `/map_2d`、目标是否在自由区域、`map→base_link` |
 | 有路径但无 `/cmd_vel_nav` | TEB 状态、local costmap、目标是否已取消 |
